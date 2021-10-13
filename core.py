@@ -25,7 +25,6 @@ class Engine:
             except:
                 pass
             game_settings[k] = v
-        print(game_settings)
 
     class Physics:
         #the physics that runs the world and applys to all objects 
