@@ -28,12 +28,19 @@ class Engine:
 
     class Physics:
         #the physics that runs the world and applys to all objects 
-
+        # - Josh will be working on this primarily
         gravity = 9.8
 
     class Object():
         #each item in the world that is not static is an object.  
         pass
+
+        #Needed objects:
+        # - block for castle - Teresa 
+        # - angle block for castle - Teresa
+        # - rock for catapult - Joshua
+        # - catapult - Joshua
+        # - enemey in the castle (stretch) - Teresa
 
 
     class Interface:
@@ -68,6 +75,12 @@ class Engine:
         class Room:
             #the space in wich the game takes place.  This class defines its area, properties, and other details.  Each room is a single level.
             pass
+
+            # Rooms needed
+            # - level 1+ - Devan
+            # - Victory screen - Devan
+            # - opening screen - Manoell
+            # - save/load menu - Richard
 
         class Camera:
             #controlls what section of room is visible at any given time
