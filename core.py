@@ -3,6 +3,7 @@
 import arcade
 import math
 import csv
+import pymunk
 
 
 class Engine:
@@ -10,6 +11,7 @@ class Engine:
 
     def start(self):
         #performs the startup actions of the game, such as showing a logo and importing all save data
+
         self.load_settings()
         self.Interface.Window(game_settings.get("SCREEN_WIDTH"),game_settings.get("SCREEN_HEIGHT"),game_settings.get("SCREEN_TITLE"))
         arcade.run()
@@ -26,12 +28,10 @@ class Engine:
                 pass
             game_settings[k] = v
 
-    class Physics:
-        #the physics that runs the world and applys to all objects 
-        # - Josh will be working on this primarily
-        gravity = 9.8
-        test_chage = False
-
+    def start_physics(self):
+        global space
+        space = pymunk.Space()
+        space.gravity = (0,500)
 
     class Object():
         #each item in the world that is not static is an object.  
@@ -71,7 +71,6 @@ class Engine:
                 # Call draw() on all your sprite lists below
 
             def on_update(self, delta_time):
-
                 pass
 
         class Room:
