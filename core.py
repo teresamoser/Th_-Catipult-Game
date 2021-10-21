@@ -30,6 +30,8 @@ class Engine:
         #the physics that runs the world and applys to all objects 
         # - Josh will be working on this primarily
         gravity = 9.8
+        test_chage = False
+
 
     class Object():
         #each item in the world that is not static is an object.  
