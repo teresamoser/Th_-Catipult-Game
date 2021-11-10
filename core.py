@@ -26,8 +26,6 @@ class Game(arcade.Window):
         physics_engine.step()
         self.catapult.update()
         
-
-
 class Catapult(arcade.Sprite):
 
     def __init__(self):
