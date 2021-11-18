@@ -1,8 +1,10 @@
 #%%
+from PIL.Image import Image
 import arcade
 import csv
 import math
 from arcade import physics_engines
+import pymunk
 
 GAME_STATE = "Testing"
 
@@ -10,127 +12,132 @@ GAME_STATE = "Testing"
 class Game(arcade.Window):
 
     def __init__(self):
-        self.catapult = Catapult()
         super().__init__(game_settings.get("SCREEN_WIDTH"),game_settings.get("SCREEN_HEIGHT"),game_settings.get("SCREEN_TITLE"))
+        arcade.set_background_color(arcade.color.WHEAT)
 
-        arcade.set_background_color(arcade.color.RED)
+        #-- Physics settup
+        self.space = pymunk.Space()
+        self.space.iterations = 35
+        self.space.gravity = (0.0, -900.0)
 
-    def setup(self):
-        self.catapult.setup()
-        
-
-    def on_draw(self):
-        self.catapult.draw()
-
-    def update(self, delta_time):
-        physics_engine.step()
-        self.catapult.update()
-        
-class Catapult(arcade.Sprite):
-
-    def __init__(self):
+        # -- Catapult initialization
         self.catapults = 0
         self.cycle_counter = 0
-        self.game_state = "Primed"
+        self.arm_game_state = "Primed"
+        self.catapult_game_state = "Loaded"
 
-        # -- GAME STATE DEFINITIONS --
-        #
-        # -IDLE GAME STATES-
-        # Primed: Catapult is in its Primed position, without a rock loaded
-        # Fired: Catapult arm is in its furthest deployed state.  
-        # Loaded: As Primed, but a rock is on the launch arm
-        #
-        # -ACTIVE GAME STATES
-        # Fireing: While in this state, the catapult's arm swings out, launching a rock
-        # Arming: While in this state, the catapult arm will slowly wind back until it reaches its "Primed" Position
-     
     def setup(self):
+        #--- Start Catapult Setup
+
         # Create Defaults for variables
         self.auto_launch_angle = 90
         self.catapult_scale = .25
+        self.loaded = False
 
         # Define sprites
         self.catapult_body_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/chassis.png",self.catapult_scale)
-        self.catapult_arm_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/arm.png",self.catapult_scale)
+        self.catapult_arm_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/arm_flat.png",self.catapult_scale)
+        self.catapult_arm_loaded_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/arm_flat_w_rock.png",self.catapult_scale)
         self.rear_wheel_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/wheel-front.png",self.catapult_scale)
         self.front_wheel_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/wheel-front.png",self.catapult_scale)
-        self.rock_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/stone.png",self.catapult_scale*.65)
 
         # Create Lists
         self.rock_list = arcade.SpriteList()
 
-
-        # Enable Physics
-        #physics_engine.add_sprite(self.catapult_arm_sprite)
-        #physics_engine.add_sprite_list(self.rock_list)
-
         self.create_catapult(game_settings.get("SCREEN_WIDTH")/2,game_settings.get("SCREEN_HEIGHT")/2)
-    
-    def update(self):
 
-        print(self.game_state)
+        #--- End catapult setup
 
-        #Actions that take place while the catapult is in the "Primed" state.
-        if self.game_state == 'Primed':
-            # -- FOR TESTING ONLY --
-            while self.cycle_counter != 50:
-                self.cycle_counter += 1
-                return
-            self.game_state = 'Loaded'
-            self.cycle_counter = 0
-            # -- END FOR TESTING ONLY --
-            return
+    def on_draw(self):
+        self.clear()
 
+        # --- Start catapult Draw ---
 
-        #Actions that take place while the catapult is in the "Fired" state.
-        if self.game_state == 'Fired':
-            # -- FOR TESTING ONLY --
-            while self.cycle_counter != 50:
-                self.cycle_counter += 1
-                return
-            self.game_state = 'Arming'
-            self.cycle_counter = 0
-            # -- END FOR TESTING ONLY --
-            self.release_rock()
-            return
-
-        #Actions that take place while the catapult is in the "Loaded" state.
-        if self.game_state == 'Loaded':
-            # -- FOR TESTING ONLY --
-            while self.cycle_counter != 50:
-                self.cycle_counter += 1
-                return
-            self.game_state = 'Fireing'
-            self.cycle_counter = 0
-            # -- END FOR TESTING ONLY --
-            return
-
-        #Actions that take place while the catapult is in the "Fireing" state.
-        if self.game_state == 'Fireing':
-            while self.arm_angle < self.auto_launch_angle:
-                self.arm_angle += 10
-                self.catapult_arm_sprite.angle = self.arm_angle
-                return
-            self.game_state = 'Fired'
-            self.cycle_counter = 0
-            return
-
-        #Actions that take place while the catapult is in the "Arming" state.
-        if self.game_state == 'Arming':
-            while self.arm_angle > 0:
-                self.arm_angle -= .25
-                self.catapult_arm_sprite.angle = self.arm_angle
-                return
-            self.game_state = 'Primed'
-            self.cycle_counter = 0
-            return
-
-    def draw(self):
+        arcade.draw_circle_outline(self.catapult_arm_sprite.center_x,self.catapult_arm_sprite.center_y,450*self.catapult_scale,arcade.color.RED)
         self.catapult_arm_sprite.draw()
+        self.catapult_arm_loaded_sprite.draw()
         self.catapult_body_sprite.draw()
         self.rear_wheel_sprite.draw()
         self.front_wheel_sprite.draw()
         self.rock_list.draw()
+
+        # --- End Catapult Draw ---
+
+    def update(self, delta_time):
+        #--- Start Catapult Update ---
+
+        print(self.catapult_game_state)
+        #Actions that always take place
+        self.catapult_arm_loaded_sprite.center_x = self.catapult_arm_sprite.center_x
+        self.catapult_arm_loaded_sprite.center_y = self.catapult_arm_sprite.center_y
+        self.catapult_arm_loaded_sprite.angle = self.catapult_arm_sprite.angle
+        if self.loaded:
+            self.catapult_arm_loaded_sprite.alpha = 255
+            self.catapult_arm_sprite.alpha = 0
+        else:
+            self.catapult_arm_loaded_sprite.alpha = 0
+            self.catapult_arm_sprite.alpha = 255
+
+        if self.catapult_game_state == 'Primed':
+            #Actions that take place while the catapult is in the "Primed" state.
+            # -- FOR TESTING ONLY --
+            while self.cycle_counter != 50:
+                self.cycle_counter += 1
+                return
+            self.catapult_game_state = 'Loaded'
+            self.cycle_counter = 0
+            # -- END FOR TESTING ONLY --
+            return
+
+        if self.catapult_game_state == 'Fired':
+            #Actions that take place while the catapult is in the "Fired" state.
+            # -- FOR TESTING ONLY --
+            while self.cycle_counter != 50:
+                self.cycle_counter += 1
+                return
+            self.catapult_game_state = 'Arming'
+            self.cycle_counter = 0
+            # -- END FOR TESTING ONLY --
+            return
+
+        if self.catapult_game_state == 'Loaded':
+            #Actions that take place while the catapult is in the "Loaded" state.
+            # -- FOR TESTING ONLY --
+            while self.cycle_counter != 50:
+                self.cycle_counter += 1
+                return
+            self.catapult_game_state = 'Fireing'
+            self.cycle_counter = 0
+            # -- END FOR TESTING ONLY --
+            # Update held rock
+            return
+
+        if self.catapult_game_state == 'Fireing':
+            #Actions that take place while the catapult is in the "Fireing" state.
+            if self.arm_angle < self.auto_launch_angle:
+                # Increment the arm
+                self.arm_angle += 10
+                self.catapult_arm_sprite.angle = self.arm_angle
+                # Update held rock
+                return
+            self.loaded = False
+            self.create_rock(1,100)
+            self.catapult_game_state = 'Fired'
+            self.cycle_counter = 0
+            return
+
+        if self.catapult_game_state == 'Arming':
+            #Actions that take place while the catapult is in the "Arming" state.
+            while self.arm_angle > -20:
+                self.arm_angle -= .25
+                self.catapult_arm_sprite.angle = self.arm_angle
+                return
+            self.loaded = True
+            self.catapult_game_state = 'Primed'
+            self.cycle_counter = 0
+            return
+
+        # --- End Catapult Update
 
     def create_catapult(self,x,y,scale=.25):
         self.catapult_scale = scale
@@ -143,9 +150,9 @@ class Catapult(arcade.Sprite):
         self.main_axel_x = x - (185*self.catapult_scale)
         self.main_axel_y = y + (160*self.catapult_scale)
         self.front_wheel_axel_x = x - (375*self.catapult_scale)
-        self.front_wheel_axel_y = y - (200*self.catapult_scale)
+        self.front_wheel_axel_y = y - (250*self.catapult_scale)
         self.rear_wheel_axel_x = x + (375*self.catapult_scale)
-        self.rear_wheel_axel_y = y - (200*self.catapult_scale)
+        self.rear_wheel_axel_y = y - (250*self.catapult_scale)
 
         #Place wheels
         self.front_wheel_sprite.center_x = self.front_wheel_axel_x
@@ -157,30 +164,56 @@ class Catapult(arcade.Sprite):
         self.catapult_arm_sprite.center_x = self.main_axel_x
         self.catapult_arm_sprite.center_y = self.main_axel_y
 
-
         #Define Catapult arm variables
         self.arm_angle = -20
-        self.rock_spawn_point_x = x
-        self.rock_spawn_point_y = y
+        self.rock_start_point_x = x + (250*self.catapult_scale)
+        self.rock_start_point_y = y + (50*self.catapult_scale)
+        self.rock_holder_point_x = self.rock_start_point_x
+        self.rock_holder_point_y = self.rock_start_point_y
         self.rock_spawn_angle = 0
  
     def fire(self):
         #Toggles the state to "Fireing" on a command.  used for a player manually controlling launch/release.
-        self.game_state = "Fireing"
+        self.catapult_game_state = "Fireing"
 
     def release(self):
         #Toggles the state to "Fired" on a command.  used for manual player launch/release.
-        self.game_state = "Fired"
+        self.catapult_game_state = "Fired"
 
     def program_fire(self,angle,force,rock_mass):
         #Used for a programed fireing sequence.  catapult will automatically change through states using the given peramiters.
         pass
 
-    def create_rock(self):
+    def create_rock_physics(self,mass,inertia):
+        #creates then releces the rock
+        rock_start_x =  self.main_axel_x + (math.cos((math.pi * self.arm_angle)/180) * 450*self.catapult_scale)
+        rock_start_y = self.main_axel_y + (math.sin((math.pi * self.arm_angle)/180) * 450*self.catapult_scale)
+
+        body = pymunk.Body(mass,inertia,body_type=pymunk.Body.DYNAMIC)
+        body.position = (rock_start_x,rock_start_y)
+
+        shape = pymunk.Poly.create_box(body,(120,120))
+        
+        self.space.add(body,shape)
+ 
+        sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/stone_rotated.png",self.catapult_scale)
+        sprite.center_x = rock_start_x
+        sprite.center_y = rock_start_y
+        sprite.angle = self.arm_angle
+        self.rock_list.append(sprite)
+
+        #rock = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/stone_rotated.png",self.catapult_scale)
+        #rock.angle = self.arm_angle
+        #rock.center_x = math.cos((math.pi * self.arm_angle)/180) * 450*self.catapult_scale
+        #rock.center_y = math.sin((math.pi * self.arm_angle)/180) * 450*self.catapult_scale
+
+        # radius sin(angle) = y
+        # radius cos(angle) = x
+
+    def create_rock(self,force,rock_mass):
         pass
 
-    def release_rock(self):
-        pass
+
 
 
 def main():
@@ -195,9 +228,7 @@ def main():
         except:
             pass
         game_settings[k] = v
-    global physics_engine
-    gravity = (0,float(game_settings.get("GRAVITY")))
-    physics_engine = arcade.PymunkPhysicsEngine(damping=float(game_settings.get("DEFAULT_DAMPING")),gravity=gravity)
+
     window = Game()
     window.setup()
     arcade.run()

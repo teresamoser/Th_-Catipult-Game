@@ -14,4 +14,17 @@ The core.py file is structured into two main components, the Engine and the Inte
 - Engine: the Engine is responsible for handling all the elements that the user does not directly see.  Game objects, the Physics engine, and save/load systems all fall into this catagory.  
 
 
+## Catapult Game states
+### IDLE GAME STATES
 
+Primed: Catapult is in its Primed position, without a rock loaded
+Fired: Catapult arm is in its furthest deployed state.  
+Loaded: As Primed, but a rock is on the launch arm
+
+### ACTIVE GAME STATES
+
+Fireing: While in this state, the catapult's arm swings out, launching a rock
+Arming: While in this state, the catapult arm will slowly wind back until it reaches its "Primed" Position
+
+### Other notes
+there is a varable called "arm_game_state" and this referes to either "Primed" (a rock is loaded) or 
