@@ -3,6 +3,7 @@ import arcade
 import csv
 import math
 from arcade import physics_engines
+
 import pymunk
 import timeit
 
@@ -83,6 +84,8 @@ class Game(arcade.Window):
 
         self.create_catapult(game_settings.get("SCREEN_WIDTH")*.88,game_settings.get("SCREEN_HEIGHT")*.17,scale=.15)
         #--- End catapult setup
+
+        self.create_block(game_settings.get("SCREEN_WIDTH")*.5, game_settings.get("SCREEN_HEIGHT")*.5 )
 
     def on_draw(self):
         arcade.start_render()
@@ -268,6 +271,21 @@ class Game(arcade.Window):
         sprite = BoxSprite(shape, "Assets/Sprites/Trebuchette/pieces/stone_rotated.png", self.catapult_scale)
         
         self.sprite_list.append(sprite)
+
+    def create_block(self, x, y, scale = 1, elasticity = .2, friction = .5):
+        length = 125 * scale
+        height = 125 * scale
+        mass = 2
+        moment = pymunk.moment_for_box(mass, (length, height))
+        body = pymunk.Body(mass, moment)
+        body.position = pymunk.Vec2d(x,y)
+        shape = pymunk.Poly.create_box(body,(length, height))
+        shape.elasticity = elasticity
+        shape.friction = friction
+        self.space.add(body, shape)
+        sprite = BoxSprite(shape,":resources:images/tiles/brickGrey.png",scale)
+        self.sprite_list.append(sprite)
+        
 
 def main():
 
