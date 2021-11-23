@@ -1,24 +1,67 @@
 #%%
-from PIL.Image import Image
 import arcade
 import csv
 import math
 from arcade import physics_engines
 import pymunk
+import timeit
 
 GAME_STATE = "Testing"
 
+class PhysicsSprite(arcade.Sprite):
+    def __init__(self, pymunk_shape, filename):
+        super().__init__(filename, center_x=pymunk_shape.body.position.x, center_y=pymunk_shape.body.position.y)
+        self.pymunk_shape = pymunk_shape
+
+class CircleSprite(PhysicsSprite):
+    def __init__(self, pymunk_shape, filename):
+        super().__init__(pymunk_shape, filename)
+        self.width = pymunk_shape.radius * 2
+        self.height = pymunk_shape.radius * 2
+
+class BoxSprite(PhysicsSprite):
+    def __init__(self, pymunk_shape, filename, scale):
+        super().__init__(pymunk_shape, filename)
+        self.scale = scale
 
 class Game(arcade.Window):
 
     def __init__(self):
         super().__init__(game_settings.get("SCREEN_WIDTH"),game_settings.get("SCREEN_HEIGHT"),game_settings.get("SCREEN_TITLE"))
-        arcade.set_background_color(arcade.color.WHEAT)
+        arcade.set_background_color(arcade.color.DARK_SLATE_GRAY)
 
-        #-- Physics settup
+        # -- Physics settup
         self.space = pymunk.Space()
         self.space.iterations = 35
         self.space.gravity = (0.0, -900.0)
+
+        # -- Sprite Settup
+        self.sprite_list: arcade.SpriteList[PhysicsSprite] = arcade.SpriteList()
+        self.static_lines = []
+
+        # Create the floor
+        floor_height = (game_settings.get("SCREEN_HEIGHT")*.25)-100
+        body = pymunk.Body(body_type=pymunk.Body.STATIC)
+        shape = pymunk.Segment(body, [0, floor_height], [game_settings.get("SCREEN_WIDTH"), floor_height], 0.0)
+        shape.friction = 1
+        shape.elasticity = .5
+        self.space.add(shape, body)
+        self.static_lines.append(shape)
+
+        # Create Walls
+        body = pymunk.Body(body_type=pymunk.Body.STATIC)
+        shape = pymunk.Segment(body, [0, 0], [0, game_settings.get("SCREEN_HEIGHT")], 0.0)
+        shape.friction = 1
+        shape.elasticity = .1
+        self.space.add(shape, body)
+        self.static_lines.append(shape)
+
+        body = pymunk.Body(body_type=pymunk.Body.STATIC)
+        shape = pymunk.Segment(body, [game_settings.get("SCREEN_WIDTH"), 0], [game_settings.get("SCREEN_WIDTH"), game_settings.get("SCREEN_HEIGHT")], 0.0)
+        shape.friction = 1
+        shape.elasticity = .1
+        self.space.add(shape, body)
+        self.static_lines.append(shape)
 
         # -- Catapult initialization
         self.catapults = 0
@@ -30,43 +73,56 @@ class Game(arcade.Window):
         #--- Start Catapult Setup
 
         # Create Defaults for variables
-        self.auto_launch_angle = 90
+        self.auto_launch_angle = 85
         self.catapult_scale = .25
         self.loaded = False
 
-        # Define sprites
-        self.catapult_body_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/chassis.png",self.catapult_scale)
-        self.catapult_arm_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/arm_flat.png",self.catapult_scale)
-        self.catapult_arm_loaded_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/arm_flat_w_rock.png",self.catapult_scale)
-        self.rear_wheel_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/wheel-front.png",self.catapult_scale)
-        self.front_wheel_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/wheel-front.png",self.catapult_scale)
 
         # Create Lists
         self.rock_list = arcade.SpriteList()
 
-        self.create_catapult(game_settings.get("SCREEN_WIDTH")/2,game_settings.get("SCREEN_HEIGHT")/2)
-
+        self.create_catapult(game_settings.get("SCREEN_WIDTH")*.88,game_settings.get("SCREEN_HEIGHT")*.17,scale=.15)
         #--- End catapult setup
 
     def on_draw(self):
-        self.clear()
+        arcade.start_render()
 
-        # --- Start catapult Draw ---
+        self.sprite_list.draw()
 
-        arcade.draw_circle_outline(self.catapult_arm_sprite.center_x,self.catapult_arm_sprite.center_y,450*self.catapult_scale,arcade.color.RED)
+        # --- start line draw ---
+        for line in self.static_lines:
+            body = line.body
+
+            pv1 = body.position + line.a.rotated(body.angle)
+            pv2 = body.position + line.b.rotated(body.angle)
+            arcade.draw_line(pv1.x, pv1.y, pv2.x, pv2.y, arcade.color.WHITE, 2)
+
+        # --- end line draw ---
+
+        # --- start static item draw ---
         self.catapult_arm_sprite.draw()
         self.catapult_arm_loaded_sprite.draw()
         self.catapult_body_sprite.draw()
         self.rear_wheel_sprite.draw()
         self.front_wheel_sprite.draw()
-        self.rock_list.draw()
 
-        # --- End Catapult Draw ---
+
+        # --- end static item draw ---
 
     def update(self, delta_time):
-        #--- Start Catapult Update ---
+        #--- step physics ---
+        self.space.step(1/60)
 
-        print(self.catapult_game_state)
+        self.catapult_state_machine()
+
+        # --- update sprite locations ---
+        for sprite in self.sprite_list:
+            sprite.center_x = sprite.pymunk_shape.body.position.x
+            sprite.center_y = sprite.pymunk_shape.body.position.y
+            sprite.angle = math.degrees(sprite.pymunk_shape.body.angle)
+
+    def catapult_state_machine(self):
+        #print(self.catapult_game_state)
         #Actions that always take place
         self.catapult_arm_loaded_sprite.center_x = self.catapult_arm_sprite.center_x
         self.catapult_arm_loaded_sprite.center_y = self.catapult_arm_sprite.center_y
@@ -121,7 +177,7 @@ class Game(arcade.Window):
                 # Update held rock
                 return
             self.loaded = False
-            self.create_rock(1,100)
+            self.create_rock()
             self.catapult_game_state = 'Fired'
             self.cycle_counter = 0
             return
@@ -137,10 +193,14 @@ class Game(arcade.Window):
             self.cycle_counter = 0
             return
 
-        # --- End Catapult Update
-
     def create_catapult(self,x,y,scale=.25):
         self.catapult_scale = scale
+
+        self.catapult_body_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/chassis.png",self.catapult_scale)
+        self.catapult_arm_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/arm_flat.png",self.catapult_scale)
+        self.catapult_arm_loaded_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/arm_flat_w_rock.png",self.catapult_scale)
+        self.rear_wheel_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/wheel-front.png",self.catapult_scale)
+        self.front_wheel_sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/wheel-front.png",self.catapult_scale)
 
         #Place Body of Catapult
         self.catapult_body_sprite.center_x = x
@@ -171,7 +231,9 @@ class Game(arcade.Window):
         self.rock_holder_point_x = self.rock_start_point_x
         self.rock_holder_point_y = self.rock_start_point_y
         self.rock_spawn_angle = 0
- 
+
+        self.catapult_game_state = 'Arming'
+
     def fire(self):
         #Toggles the state to "Fireing" on a command.  used for a player manually controlling launch/release.
         self.catapult_game_state = "Fireing"
@@ -184,37 +246,28 @@ class Game(arcade.Window):
         #Used for a programed fireing sequence.  catapult will automatically change through states using the given peramiters.
         pass
 
-    def create_rock_physics(self,mass,inertia):
-        #creates then releces the rock
-        rock_start_x =  self.main_axel_x + (math.cos((math.pi * self.arm_angle)/180) * 450*self.catapult_scale)
-        rock_start_y = self.main_axel_y + (math.sin((math.pi * self.arm_angle)/180) * 450*self.catapult_scale)
+    def create_rock(self,mass = 4.0,elasticity = .5,friction = 0.4,force = 150000):
+        x = self.main_axel_x + (math.cos((self.arm_angle * math.pi)/180) * 500 * self.catapult_scale)
+        y = self.main_axel_y + (math.sin((self.arm_angle * math.pi)/180) * 500 * self.catapult_scale)
+        width = 135*self.catapult_scale
+        height = 135*self.catapult_scale
+        mass = 4.0
+        moment = pymunk.moment_for_box(mass, (width, height))
+        body = pymunk.Body(mass, moment)
+        body.angle = self.arm_angle
+        body.position = pymunk.Vec2d(x, y)
+        shape = pymunk.Poly.create_box(body, (width, height))
+        shape.elasticity = elasticity
+        shape.friction = friction
+        self.space.add(body, shape)
+        # body.sleep()
+        y_force = (math.sin((self.arm_angle * math.pi)/180) * force)
+        x_force = -(math.cos((self.arm_angle * math.pi)/180) * force)
+        shape.body.apply_force_at_local_point((x_force,y_force),(0,1))
 
-        body = pymunk.Body(mass,inertia,body_type=pymunk.Body.DYNAMIC)
-        body.position = (rock_start_x,rock_start_y)
-
-        shape = pymunk.Poly.create_box(body,(120,120))
+        sprite = BoxSprite(shape, "Assets/Sprites/Trebuchette/pieces/stone_rotated.png", self.catapult_scale)
         
-        self.space.add(body,shape)
- 
-        sprite = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/stone_rotated.png",self.catapult_scale)
-        sprite.center_x = rock_start_x
-        sprite.center_y = rock_start_y
-        sprite.angle = self.arm_angle
-        self.rock_list.append(sprite)
-
-        #rock = arcade.Sprite("Assets/Sprites/Trebuchette/pieces/stone_rotated.png",self.catapult_scale)
-        #rock.angle = self.arm_angle
-        #rock.center_x = math.cos((math.pi * self.arm_angle)/180) * 450*self.catapult_scale
-        #rock.center_y = math.sin((math.pi * self.arm_angle)/180) * 450*self.catapult_scale
-
-        # radius sin(angle) = y
-        # radius cos(angle) = x
-
-    def create_rock(self,force,rock_mass):
-        pass
-
-
-
+        self.sprite_list.append(sprite)
 
 def main():
 
