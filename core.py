@@ -84,7 +84,24 @@ class Game(arcade.Window):
         self.create_catapult(game_settings.get("SCREEN_WIDTH")*.88,game_settings.get("SCREEN_HEIGHT")*.17,scale=.15)
         #--- End catapult setup
 
-        self.create_board(game_settings.get("SCREEN_WIDTH")*.5,game_settings.get("SCREEN_HEIGHT")*.5,500,200)
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.1, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20)
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.1, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.1, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.1, game_settings.get("SCREEN_HEIGHT")* 3,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.15, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.15, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.15, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.2, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.2, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.2, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.2, game_settings.get("SCREEN_HEIGHT")* 3,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.25, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.25, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20)
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.25, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.3, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.3, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.3, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.3, game_settings.get("SCREEN_HEIGHT")* 3,scale=.20 )
 
     def on_draw(self):
         arcade.start_render()
@@ -299,7 +316,6 @@ class Game(arcade.Window):
             sprite.width = w
             sprite.height = h
             self.sprite_list.append(sprite)
-
 
 
 def main():
