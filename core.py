@@ -84,6 +84,8 @@ class Game(arcade.Window):
         self.create_catapult(game_settings.get("SCREEN_WIDTH")*.88,game_settings.get("SCREEN_HEIGHT")*.17,scale=.15)
         #--- End catapult setup
 
+        self.create_board(game_settings.get("SCREEN_WIDTH")*.5,game_settings.get("SCREEN_HEIGHT")*.5,500,200)
+
     def on_draw(self):
         arcade.start_render()
 
@@ -251,7 +253,6 @@ class Game(arcade.Window):
         y = self.main_axel_y + (math.sin((self.arm_angle * math.pi)/180) * 500 * self.catapult_scale)
         width = 135*self.catapult_scale
         height = 135*self.catapult_scale
-        mass = 4.0
         moment = pymunk.moment_for_box(mass, (width, height))
         body = pymunk.Body(mass, moment)
         body.angle = self.arm_angle
@@ -268,6 +269,38 @@ class Game(arcade.Window):
         sprite = BoxSprite(shape, "Assets/Sprites/Trebuchette/pieces/stone_rotated.png", self.catapult_scale)
         
         self.sprite_list.append(sprite)
+
+    def create_box(self, x, y, scale = 1, elasticity = .2, friction = .5):
+            length = 125 * scale
+            height = 125 * scale
+            mass = 2
+            moment = pymunk.moment_for_box(mass, (length, height))
+            body = pymunk.Body(mass, moment)
+            body.position = pymunk.Vec2d(x,y)
+            shape = pymunk.Poly.create_box(body,(length, height))
+            shape.elasticity = elasticity
+            shape.friction = friction
+            self.space.add(body, shape)
+            sprite = BoxSprite(shape,":resources:images/tiles/brickGrey.png",scale)
+            self.sprite_list.append(sprite)
+
+    def create_board(self, x, y, h,w,scale = 1, elasticity = .2, friction = .5):
+            length = w * scale
+            height = h * scale
+            mass = 2
+            moment = pymunk.moment_for_box(mass, (length, height))
+            body = pymunk.Body(mass, moment)
+            body.position = pymunk.Vec2d(x,y)
+            shape = pymunk.Poly.create_box(body,(length, height))
+            shape.elasticity = elasticity
+            shape.friction = friction
+            self.space.add(body, shape)
+            sprite = BoxSprite(shape,":resources:images/tiles/brickGrey.png",scale)
+            sprite.width = w
+            sprite.height = h
+            self.sprite_list.append(sprite)
+
+
 
 def main():
 
