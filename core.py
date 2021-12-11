@@ -3,6 +3,7 @@ import arcade
 import csv
 import math
 from arcade import physics_engines
+
 import pymunk
 import timeit
 
@@ -84,24 +85,6 @@ class TestRoom(arcade.View):
         self.create_catapult(game_settings.get("SCREEN_WIDTH")*.88,game_settings.get("SCREEN_HEIGHT")*.17,scale=.15)
         #--- End catapult setup
 
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.1, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20)
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.1, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.1, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.1, game_settings.get("SCREEN_HEIGHT")* 3,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.15, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.15, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.15, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.2, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.2, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.2, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.2, game_settings.get("SCREEN_HEIGHT")* 3,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.25, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.25, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20)
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.25, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.3, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.3, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.3, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
-        self.create_box(game_settings.get("SCREEN_WIDTH")*.3, game_settings.get("SCREEN_HEIGHT")* 3,scale=.20 )
 
     def on_draw(self):
         arcade.start_render()
@@ -265,8 +248,6 @@ class TestRoom(arcade.View):
         #Used for a programed fireing sequence.  catapult will automatically change through states using the given peramiters.
         self.auto_launch_angle = angle
         self.launch_force = force
-        
-        
 
     def create_rock(self,mass = 4.0,elasticity = .5,friction = 0.4,force = 150000):
         self.launch_force = force
