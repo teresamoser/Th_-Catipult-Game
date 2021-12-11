@@ -7,7 +7,7 @@ from arcade import physics_engines
 import pymunk
 import timeit
 
-GAME_STATE = "Testing"
+GAME_MODE = "Testing"
 
 class PhysicsSprite(arcade.Sprite):
     def __init__(self, pymunk_shape, filename):
@@ -25,10 +25,10 @@ class BoxSprite(PhysicsSprite):
         super().__init__(pymunk_shape, filename)
         self.scale = scale
 
-class Game(arcade.Window):
+class TestRoom(arcade.View):
 
     def __init__(self):
-        super().__init__(game_settings.get("SCREEN_WIDTH"),game_settings.get("SCREEN_HEIGHT"),game_settings.get("SCREEN_TITLE"))
+        super().__init__()
         arcade.set_background_color(arcade.color.DARK_SLATE_GRAY)
 
         # -- Physics settup
@@ -85,7 +85,6 @@ class Game(arcade.Window):
         self.create_catapult(game_settings.get("SCREEN_WIDTH")*.88,game_settings.get("SCREEN_HEIGHT")*.17,scale=.15)
         #--- End catapult setup
 
-        self.create_block(game_settings.get("SCREEN_WIDTH")*.5, game_settings.get("SCREEN_HEIGHT")*.5 )
 
     def on_draw(self):
         arcade.start_render()
@@ -247,14 +246,15 @@ class Game(arcade.Window):
 
     def program_fire(self,angle,force,rock_mass):
         #Used for a programed fireing sequence.  catapult will automatically change through states using the given peramiters.
-        pass
+        self.auto_launch_angle = angle
+        self.launch_force = force
 
     def create_rock(self,mass = 4.0,elasticity = .5,friction = 0.4,force = 150000):
+        self.launch_force = force
         x = self.main_axel_x + (math.cos((self.arm_angle * math.pi)/180) * 500 * self.catapult_scale)
         y = self.main_axel_y + (math.sin((self.arm_angle * math.pi)/180) * 500 * self.catapult_scale)
         width = 135*self.catapult_scale
         height = 135*self.catapult_scale
-        mass = 4.0
         moment = pymunk.moment_for_box(mass, (width, height))
         body = pymunk.Body(mass, moment)
         body.angle = self.arm_angle
@@ -272,20 +272,123 @@ class Game(arcade.Window):
         
         self.sprite_list.append(sprite)
 
-    def create_block(self, x, y, scale = 1, elasticity = .2, friction = .5):
-        length = 125 * scale
-        height = 125 * scale
-        mass = 2
-        moment = pymunk.moment_for_box(mass, (length, height))
-        body = pymunk.Body(mass, moment)
-        body.position = pymunk.Vec2d(x,y)
-        shape = pymunk.Poly.create_box(body,(length, height))
-        shape.elasticity = elasticity
-        shape.friction = friction
-        self.space.add(body, shape)
-        sprite = BoxSprite(shape,":resources:images/tiles/brickGrey.png",scale)
-        self.sprite_list.append(sprite)
+    def create_box(self, x, y, scale = 1, elasticity = .2, friction = .5):
+            length = 125 * scale
+            height = 125 * scale
+            mass = 2
+            moment = pymunk.moment_for_box(mass, (length, height))
+            body = pymunk.Body(mass, moment)
+            body.position = pymunk.Vec2d(x,y)
+            shape = pymunk.Poly.create_box(body,(length, height))
+            shape.elasticity = elasticity
+            shape.friction = friction
+            self.space.add(body, shape)
+            sprite = BoxSprite(shape,":resources:images/tiles/brickGrey.png",scale)
+            self.sprite_list.append(sprite)
+
+    def create_board(self, x, y, h,w,scale = 1, elasticity = .2, friction = .5):
+            length = w * scale
+            height = h * scale
+            mass = 2
+            moment = pymunk.moment_for_box(mass, (length, height))
+            body = pymunk.Body(mass, moment)
+            body.position = pymunk.Vec2d(x,y)
+            shape = pymunk.Poly.create_box(body,(length, height))
+            shape.elasticity = elasticity
+            shape.friction = friction
+            self.space.add(body, shape)
+            sprite = BoxSprite(shape,":resources:images/tiles/brickGrey.png",scale)
+            sprite.width = w
+            sprite.height = h
+            self.sprite_list.append(sprite)
+
+    def create_objective(self,x, y, scale = 1, elasticity = .2, friction = .5,hp=100):
+            length = 125 * scale
+            height = 125 * scale
+            mass = 2
+            moment = pymunk.moment_for_box(mass, (length, height))
+            body = pymunk.Body(mass, moment)
+            body.position = pymunk.Vec2d(x,y)
+            shape = pymunk.Poly.create_box(body,(length, height))
+            shape.elasticity = elasticity
+            shape.friction = friction
+            self.space.add(body, shape)
+            sprite = BoxSprite(shape,":resources:images/tiles/brickGrey.png",scale)
+            sprite.hp = hp
+            self.sprite_list.append(sprite)
+
+
+class StartView(arcade.View):
+    
+    def __init__(self):
         
+        super().__init__()
+        self.texture = arcade.load_texture("Assets/Tilesets/starting.png")
+
+        arcade.set_viewport(0, game_settings.get("SCREEN_WIDTH") - 1, 0, game_settings.get("SCREEN_HEIGHT") - 1)
+
+    def on_draw(self):
+        arcade.start_render()
+        self.texture.draw_sized(game_settings.get("SCREEN_WIDTH") /2, game_settings.get("SCREEN_HEIGHT") /2,
+                                game_settings.get("SCREEN_WIDTH"), game_settings.get("SCREEN_HEIGHT"))
+        arcade.draw_text("Welcome to Castle Crusher!", game_settings.get("SCREEN_WIDTH") / 2, game_settings.get("SCREEN_HEIGHT") / 2 + 225,
+                         arcade.color.BLACK, font_size=50, anchor_x="center")
+        arcade.draw_text("Click to continue to our game", game_settings.get("SCREEN_WIDTH") / 2, game_settings.get("SCREEN_HEIGHT") / 2 - 300,
+                         arcade.color.BLACK, font_size=40, anchor_x="center")
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        if GAME_MODE == "Testing":
+            game_view = TestRoom()
+        else:
+            game_view = GameRoom()
+        game_view.setup()
+        self.window.show_view(game_view)
+
+class VictoryView(arcade.View):
+
+    def __init__(self):
+        
+        super().__init__()
+        self.texture = arcade.load_texture("Assets/Tilesets/victory.png")
+
+        arcade.set_viewport(0, game_settings.get("SCREEN_WIDTH") - 1, 0, game_settings.get("SCREEN_HEIGHT") - 1)
+        #elf.background = None
+
+    def on_draw(self):
+        arcade.start_render()
+        #self.background = arcade.load_texture("Assets/Tilesets/victory.png")
+        self.texture.draw_sized(game_settings.get("SCREEN_WIDTH") / 2, game_settings.get("SCREEN_HEIGHT") / 2,
+                                game_settings.get("SCREEN_WIDTH"), game_settings.get("SCREEN_HEIGHT"))
+        arcade.draw_text("VICTORY!", game_settings.get("SCREEN_WIDTH") - 400, game_settings.get("SCREEN_HEIGHT") - 100,
+                         arcade.color.BLACK, font_size=50, anchor_x="center")
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        game_view = GameView()
+        game_view.setup()
+        self.window.show_view(game_view)
+
+class GameOverView(arcade.View):
+
+    def __init__(self):
+        
+        super().__init__()
+        self.texture = arcade.load_texture("game_over.png")
+
+        # Reset the viewport, necessary if we have a scrolling game and we need
+        # to reset the viewport back to the start so we can see what we draw.
+        arcade.set_viewport(0, game_settings.get("SCREEN_WIDTH") - 1, 0, game_settings.get("SCREEN_HEIGHT") - 1)
+
+    def on_draw(self):
+        """ Draw this view """
+        arcade.start_render()
+        self.texture.draw_sized(game_settings.get("SCREEN_WIDTH") / 2, game_settings.get("SCREEN_HEIGHT") / 2,
+                                game_settings.get("SCREEN_WIDTH"), game_settings.get("SCREEN_HEIGHT"))
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """ If the user presses the mouse button, re-start the game. """
+        game_view = GameView()
+        game_view.setup()
+        self.window.show_view(game_view)
 
 def main():
 
@@ -300,8 +403,10 @@ def main():
             pass
         game_settings[k] = v
 
-    window = Game()
-    window.setup()
+    window = arcade.Window(game_settings.get("SCREEN_WIDTH"),game_settings.get("SCREEN_HEIGHT"),game_settings.get("SCREEN_TITLE"))
+    start_view = StartView()
+    window.show_view(start_view)
+    #start_view.setup()
     arcade.run()
 
 if __name__ == "__main__":
