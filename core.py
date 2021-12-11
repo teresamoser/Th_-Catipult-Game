@@ -263,9 +263,13 @@ class TestRoom(arcade.View):
 
     def program_fire(self,angle,force,rock_mass):
         #Used for a programed fireing sequence.  catapult will automatically change through states using the given peramiters.
-        pass
+        self.auto_launch_angle = angle
+        self.launch_force = force
+        
+        
 
     def create_rock(self,mass = 4.0,elasticity = .5,friction = 0.4,force = 150000):
+        self.launch_force = force
         x = self.main_axel_x + (math.cos((self.arm_angle * math.pi)/180) * 500 * self.catapult_scale)
         y = self.main_axel_y + (math.sin((self.arm_angle * math.pi)/180) * 500 * self.catapult_scale)
         width = 135*self.catapult_scale
@@ -316,6 +320,22 @@ class TestRoom(arcade.View):
             sprite.width = w
             sprite.height = h
             self.sprite_list.append(sprite)
+
+    def create_objective(self,x, y, scale = 1, elasticity = .2, friction = .5,hp=100):
+            length = 125 * scale
+            height = 125 * scale
+            mass = 2
+            moment = pymunk.moment_for_box(mass, (length, height))
+            body = pymunk.Body(mass, moment)
+            body.position = pymunk.Vec2d(x,y)
+            shape = pymunk.Poly.create_box(body,(length, height))
+            shape.elasticity = elasticity
+            shape.friction = friction
+            self.space.add(body, shape)
+            sprite = BoxSprite(shape,":resources:images/tiles/brickGrey.png",scale)
+            sprite.hp = hp
+            self.sprite_list.append(sprite)
+
 
 class StartView(arcade.View):
     
