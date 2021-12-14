@@ -27,4 +27,4 @@ Firing: While in this state, the catapult's arm swings out, launching a rock.
 Arming: While in this state, the catapult arm will slowly wind back until it reaches its "Primed" Position.
 
 ### Other notes
-There is a variable called "arm_game_state" and this refers to either "Primed" (a rock is loaded) or 
+There is a variable called "arm_game_state" and this refers to either "Primed" (a rock is loaded). 
