@@ -3,9 +3,8 @@ import arcade
 import csv
 import math
 from arcade import physics_engines
-
 import pymunk
-import timeit
+import PySimpleGUI as sg
 
 GAME_MODE = "Testing"
 
@@ -74,7 +73,7 @@ class TestRoom(arcade.View):
         #--- Start Catapult Setup
 
         # Create Defaults for variables
-        self.auto_launch_angle = 45
+        self.auto_launch_angle = 85
         self.catapult_scale = .25
         self.loaded = False
 
@@ -85,6 +84,24 @@ class TestRoom(arcade.View):
         self.create_catapult(game_settings.get("SCREEN_WIDTH")*.88,game_settings.get("SCREEN_HEIGHT")*.17,scale=.15)
         #--- End catapult setup
 
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.1, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20)
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.1, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.1, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.1, game_settings.get("SCREEN_HEIGHT")* 3,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.15, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.15, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.15, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.2, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.2, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.2, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.2, game_settings.get("SCREEN_HEIGHT")* 3,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.25, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.25, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20)
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.25, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.3, game_settings.get("SCREEN_HEIGHT")*.1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.3, game_settings.get("SCREEN_HEIGHT")* 1,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.3, game_settings.get("SCREEN_HEIGHT")* 2,scale=.20 )
+        self.create_box(game_settings.get("SCREEN_WIDTH")*.3, game_settings.get("SCREEN_HEIGHT")* 3,scale=.20 )
 
     def on_draw(self):
         arcade.start_render()
@@ -160,15 +177,8 @@ class TestRoom(arcade.View):
 
         if self.catapult_game_state == 'Loaded':
             #Actions that take place while the catapult is in the "Loaded" state.
-            # -- FOR TESTING ONLY --
-            while self.cycle_counter != 50:
-                self.cycle_counter += 1
-                return
-            self.catapult_game_state = 'Fireing'
-            self.cycle_counter = 0
-            # -- END FOR TESTING ONLY --
-            # Update held rock
-            return
+            peram = self.get_launch_peramiters()
+            self.program_fire(peram[0])
 
         if self.catapult_game_state == 'Fireing':
             #Actions that take place while the catapult is in the "Fireing" state.
@@ -244,16 +254,12 @@ class TestRoom(arcade.View):
         #Toggles the state to "Fired" on a command.  used for manual player launch/release.
         self.catapult_game_state = "Fired"
 
-    def program_fire(self,angle,force,rock_mass):
+    def program_fire(self,angle):
         #Used for a programed fireing sequence.  catapult will automatically change through states using the given peramiters.
         self.auto_launch_angle = angle
-<<<<<<< HEAD
-        self.launch_force = force    
-=======
-        self.launch_force = force
->>>>>>> 2b4dec6767fa6e8fc695dbff77e28bbb33c04ffb
+        self.catapult_game_state = 'Fireing'
 
-    def create_rock(self,mass = 4.0,elasticity = .5,friction = 0.4,force = 200000):
+    def create_rock(self,mass = 4.0,elasticity = .5,friction = 0.4,force = 150000):
         self.launch_force = force
         x = self.main_axel_x + (math.cos((self.arm_angle * math.pi)/180) * 500 * self.catapult_scale)
         y = self.main_axel_y + (math.sin((self.arm_angle * math.pi)/180) * 500 * self.catapult_scale)
@@ -321,6 +327,24 @@ class TestRoom(arcade.View):
             sprite.hp = hp
             self.sprite_list.append(sprite)
 
+    def get_launch_peramiters(self):
+        sg.theme('Dark Blue3')   # Add a touch of color
+        #  All the stuff inside your window.
+        layout = [  [sg.Text('Determine Trajectory of Trebuchet')],
+                        #[sg.Text('Enter launch force: '), sg.InputText()],
+                        [sg.Text('Enter launch angle: '), sg.InputText()],
+                        [sg.Button('Ok'), sg.Button('Cancel')] ]
+            # Create the Window
+        window = sg.Window('Trajectory Entry', layout)
+            # Event Loop to process "events" and get the "values" of the inputs
+        while True:
+                event, values = window.read()
+                if event == sg.WIN_CLOSED or event == 'Cancel':
+                    # if user closes window or clicks cancel
+                    break
+                window.close()
+                return([int(values[0])])
+        window.close()
 
 class StartView(arcade.View):
     
